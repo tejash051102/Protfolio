@@ -3,7 +3,27 @@ import axios from 'axios'
 
 export default function FileUploader({ type = 'misc', slug = '', multiple = false, onChange }){
   const [files, setFiles] = useState([])
-  const [uploading, setUploading] = useState(false)
+  const [uploadingMap, setUploadingMap] = useState({})
+
+  const uploadSingle = async (file) => {
+    const fd = new FormData()
+    fd.append('file', file)
+    try{
+      const res = await axios.post(`${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/upload?type=${type}&slug=${slug}`, fd, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+        onUploadProgress: (p) => {
+          const percent = Math.round((p.loaded * 100) / p.total)
+          setUploadingMap(prev => ({ ...prev, [file.name]: percent }))
+        }
+      })
+      if(res.data && res.data.success) return res.data.data
+      throw new Error('Upload failed')
+    }catch(err){
+      throw err
+    } finally {
+      setUploadingMap(prev => { const copy = { ...prev }; delete copy[file.name]; return copy })
+    }
+  }
 
   const onDrop = useCallback(async (e) => {
     e.preventDefault()
@@ -12,25 +32,16 @@ export default function FileUploader({ type = 'misc', slug = '', multiple = fals
     if(!fileList) return
     const toUpload = multiple ? Array.from(fileList) : [fileList[0]]
 
-    setUploading(true)
     const uploaded = []
     for(const file of toUpload){
       try{
-        const fd = new FormData()
-        fd.append('file', file)
-        const res = await axios.post(`${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/upload?type=${type}&slug=${slug}`, fd, {
-          headers: { 'Content-Type': 'multipart/form-data' },
-          onUploadProgress: (p) => {
-            // Could set progress state per file
-          }
-        })
-        if(res.data && res.data.success) uploaded.push(res.data.data)
+        const data = await uploadSingle(file)
+        uploaded.push(data)
       }catch(err){
         console.error('Upload failed', err)
-        alert(err.response?.data?.message || 'Upload failed')
+        alert(err.response?.data?.message || err.message || 'Upload failed')
       }
     }
-    setUploading(false)
     setFiles(prev => multiple ? [...prev, ...uploaded] : uploaded)
     if(onChange) onChange(multiple ? [...files, ...uploaded] : uploaded[0])
   }, [type, slug, multiple, onChange, files])
@@ -59,7 +70,11 @@ export default function FileUploader({ type = 'misc', slug = '', multiple = fals
           </div>
         ))}
       </div>
-      {uploading && <div className="mt-2">Uploading...</div>}
+      <div className="mt-2">
+        {Object.keys(uploadingMap).map(name => (
+          <div key={name} className="text-sm">{name} - {uploadingMap[name]}%</div>
+        ))}
+      </div>
     </div>
   )
 }

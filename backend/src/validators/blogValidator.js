@@ -2,7 +2,7 @@ const { z } = require('zod')
 
 exports.createBlogSchema = z.object({
   title: z.string().min(1),
-  slug: z.string().min(1),
+  slug: z.string().optional(),
   excerpt: z.string().optional(),
   content: z.string().min(1),
   coverImage: z.string().optional(),
