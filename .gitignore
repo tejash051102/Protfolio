@@ -1,0 +1,21 @@
+# Node
+
+node_modules
+.env
+.env.local
+.vscode
+.DS_Store
+
+# Uploads
+backend/uploads/
+
+# Logs
+logs
+*.log
+npm-debug.log*
+
+# Build
+frontend/dist
+
+# Mac
+*.DS_Store

@@ -1,0 +1,21 @@
+const express = require('express')
+const router = express.Router()
+const blogRoutes = require('./blogs')
+const authRoutes = require('./auth')
+const projectRoutes = require('./projects')
+const profileRoutes = require('./profile')
+const adminRoutes = require('./admin')
+const adminBlogRoutes = require('./adminBlogs')
+const contactRoutes = require('./contact')
+const uploadRoutes = require('./upload')
+
+router.use('/auth', authRoutes)
+router.use('/projects', projectRoutes)
+router.use('/profile', profileRoutes)
+router.use('/admin', adminRoutes)
+router.use('/admin', adminBlogRoutes)
+router.use('/blogs', blogRoutes)
+router.use('/contact', contactRoutes)
+router.use('/upload', uploadRoutes)
+
+module.exports = router
