@@ -8,6 +8,7 @@ const adminRoutes = require('./admin')
 const adminBlogRoutes = require('./adminBlogs')
 const contactRoutes = require('./contact')
 const uploadRoutes = require('./upload')
+const creativeRoutes = require('./creative')
 
 router.use('/auth', authRoutes)
 router.use('/projects', projectRoutes)
@@ -17,5 +18,6 @@ router.use('/admin', adminBlogRoutes)
 router.use('/blogs', blogRoutes)
 router.use('/contact', contactRoutes)
 router.use('/upload', uploadRoutes)
+router.use('/creative', creativeRoutes)
 
 module.exports = router
