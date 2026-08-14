@@ -7,6 +7,7 @@ const cookieParser = require('cookie-parser')
 const mongoose = require('mongoose')
 const routes = require('./routes')
 const { notFound, errorHandler } = require('./middleware/errors')
+const path = require('path')
 
 require('dotenv').config()
 
@@ -21,6 +22,9 @@ app.use(cors({ origin: process.env.CLIENT_URL || 'http://localhost:5173', creden
 
 const apiLimiter = rateLimit({ windowMs: 15 * 60 * 1000, max: 100 })
 app.use('/api', apiLimiter)
+
+// Serve uploads statically
+app.use('/uploads', express.static(path.join(__dirname, '..', 'uploads')))
 
 app.use('/api', routes)
 

@@ -1,43 +1,21 @@
 const multer = require('multer')
-const path = require('path')
-const sharp = require('sharp')
-const fs = require('fs')
-
-const uploadDir = 'backend/uploads'
-if(!fs.existsSync(uploadDir)) fs.mkdirSync(uploadDir, { recursive: true })
-
-const storage = multer.diskStorage({
-  destination: function (req, file, cb) {
-    cb(null, uploadDir)
-  },
-  filename: function (req, file, cb) {
-    const ext = path.extname(file.originalname)
-    cb(null, `${Date.now()}${ext}`)
-  }
-})
-
-function fileFilter(req, file, cb){
-  const allowed = /jpeg|jpg|png|webp/
-  const ext = path.extname(file.originalname).toLowerCase()
-  if(allowed.test(ext)) cb(null, true)
-  else cb(new Error('Invalid file type'))
-}
-
-const upload = multer({ storage, fileFilter, limits: { fileSize: 5 * 1024 * 1024 } })
-
 const express = require('express')
 const router = express.Router()
+const { processAndSave } = require('../services/uploadService')
 
+// use memory storage so we can process file buffer directly
+const storage = multer.memoryStorage()
+const upload = multer({ storage, limits: { fileSize: (Number(process.env.MAX_UPLOAD_SIZE_MB) || 5) * 1024 * 1024 } })
+
+// POST /api/upload?type=projects|blogs|creative|certificates|profile&slug=optional-slug
 router.post('/', upload.single('file'), async (req, res, next) => {
   try{
+    const type = req.query.type || 'misc'
+    const slug = req.query.slug || ''
     if(!req.file) return res.status(400).json({ success: false, message: 'No file uploaded' })
-    // Optimize using sharp
-    const outPath = path.join(req.file.destination, `opt_${req.file.filename}`)
-    await sharp(req.file.path).resize(1200).toFile(outPath)
-    // remove original
-    fs.unlinkSync(req.file.path)
-    const publicPath = `/uploads/${path.basename(outPath)}`
-    res.json({ success: true, data: { path: publicPath } })
+
+    const result = await processAndSave(req.file.buffer, req.file.originalname, type, slug)
+    res.json({ success: true, data: result })
   }catch(err){ next(err) }
 })
 
